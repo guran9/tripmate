@@ -429,52 +429,49 @@ const toggleLike = (tripId) => {
             {trip.endDate}
           </p>
 
-          <button
-            onClick={() =>
-              setSelectedTrip(
-                selectedTrip === trip.id
-                  ? null
-                  : trip.id
-              )
-            }
-          >
-            상세보기
-          </button>
-
-          <button
-  onClick={() => toggleLike(trip.id)}
+          <div
+  style={{
+    display: "flex",
+    justifyContent: "center",
+    gap: "10px",
+    marginTop: "10px",
+  }}
 >
-  ❤️ {Array.isArray(likes[trip.id]) ? likes[trip.id].length : 0}
-</button>
-
-          {" "}
-
-
-            {trip.author === currentUser && (
-  <button
-    onClick={() => {
-      setEditingTrip(trip.id);
-
-      setTitle(trip.title);
-      setStartDate(trip.startDate);
-      setEndDate(trip.endDate);
-      setDescription(trip.description);
-      console.log("수정 클릭", trip.id, trip.author, currentUser);
-    }}
-  >
-    수정
-  </button>
-)}
-
-          {trip.author === currentUser && (
   <button
     onClick={() =>
-      deleteTrip(trip.id)
+      setSelectedTrip(
+        selectedTrip === trip.id ? null : trip.id
+      )
     }
   >
-    삭제
+    상세보기
   </button>
-)}
+
+  <button onClick={() => toggleLike(trip.id)}>
+    ❤️ {Array.isArray(likes[trip.id]) ? likes[trip.id].length : 0}
+  </button>
+
+  {trip.author === currentUser && (
+    <button
+      onClick={() => {
+        setEditingTrip(trip.id);
+        setTitle(trip.title);
+        setStartDate(trip.startDate);
+        setEndDate(trip.endDate);
+        setDescription(trip.description);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }}
+    >
+      수정
+    </button>
+  )}
+
+  {trip.author === currentUser && (
+    <button onClick={() => deleteTrip(trip.id)}>
+      삭제
+    </button>
+  )}
+</div>
 
           {selectedTrip === trip.id && (
   <div

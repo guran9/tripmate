@@ -1,3 +1,4 @@
+const db = require("../db");
 const express = require("express");
 
 const router = express.Router();
@@ -24,7 +25,18 @@ const trips = [
 ];
 
 router.get("/", (req, res) => {
-  res.json(trips);
+  db.query(
+    "SELECT * FROM trips",
+    (err, results) => {
+      if (err) {
+        return res
+          .status(500)
+          .json(err);
+      }
+
+      res.json(results);
+    }
+  );
 });
 
 router.get("/:id", (req, res) => {
@@ -50,21 +62,74 @@ router.post("/", (req, res) => {
     description,
   } = req.body;
 
-  const newTrip = {
-    id: trips.length + 1,
+  const sql =
+    "INSERT INTO trips (title, author, startDate, endDate, description) VALUES (?, ?, ?, ?, ?)";
+
+  db.query(
+    sql,
+    [title, author, startDate, endDate, description],
+    (err, result) => {
+      if (err) {
+        return res.status(500).json(err);
+      }
+
+      res.json({
+        message: "여행 등록 성공",
+        trip: {
+          id: result.insertId,
+          title,
+          author,
+          startDate,
+          endDate,
+          description,
+        },
+      });
+    }
+  );
+});
+
+router.delete("/:id", (req, res) => {
+  const id = req.params.id;
+
+  const sql = "DELETE FROM trips WHERE id = ?";
+
+  db.query(sql, [id], (err, result) => {
+    if (err) {
+      return res.status(500).json(err);
+    }
+
+    res.json({
+      message: "여행 삭제 성공",
+    });
+  });
+});
+
+router.put("/:id", (req, res) => {
+  const id = req.params.id;
+
+  const {
     title,
-    author,
     startDate,
     endDate,
     description,
-  };
+  } = req.body;
 
-  trips.push(newTrip);
+  const sql =
+    "UPDATE trips SET title = ?, startDate = ?, endDate = ?, description = ? WHERE id = ?";
 
-  res.json({
-    message: "여행 등록 성공",
-    trip: newTrip,
-  });
+  db.query(
+    sql,
+    [title, startDate, endDate, description, id],
+    (err, result) => {
+      if (err) {
+        return res.status(500).json(err);
+      }
+
+      res.json({
+        message: "여행 수정 성공",
+      });
+    }
+  );
 });
 
 module.exports = router;

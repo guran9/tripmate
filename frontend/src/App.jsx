@@ -18,6 +18,11 @@ function App() {
   const [password, setPassword] = useState("");
   const [currentUser, setCurrentUser] = useState(null);
 
+  const [comments, setComments] = useState({});
+  const [commentText, setCommentText] = useState("");
+
+  const [likes, setLikes] = useState({});
+
   const addTrip = async () => {
     try {
       const response = await fetch(
@@ -57,45 +62,72 @@ function App() {
     }
   };
 
-  const deleteTrip = (id) => {
-  const updatedTrips = trips.filter(
-    (trip) => trip.id !== id
-  );
+  const deleteTrip = async (id) => {
+  try {
+    await fetch(`http://localhost:3000/api/trips/${id}`, {
+      method: "DELETE",
+    });
 
-  setTrips(updatedTrips);
+    const updatedTrips = trips.filter(
+      (trip) => trip.id !== id
+    );
 
-  localStorage.setItem(
-    "trips",
-    JSON.stringify(updatedTrips)
-  );
+    setTrips(updatedTrips);
+
+    localStorage.setItem(
+      "trips",
+      JSON.stringify(updatedTrips)
+    );
+  } catch (error) {
+    console.error(error);
+  }
 };
 
-const updateTrip = () => {
-  const updatedTrips = trips.map((trip) =>
-    trip.id === editingTrip
-      ? {
-          ...trip,
+const updateTrip = async () => {
+  try {
+    await fetch(
+      `http://localhost:3000/api/trips/${editingTrip}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
           title,
           startDate,
           endDate,
           description,
-        }
-      : trip
-  );
+        }),
+      }
+    );
 
-  setTrips(updatedTrips);
+    const updatedTrips = trips.map((trip) =>
+      trip.id === editingTrip
+        ? {
+            ...trip,
+            title,
+            startDate,
+            endDate,
+            description,
+          }
+        : trip
+    );
 
-  localStorage.setItem(
-    "trips",
-    JSON.stringify(updatedTrips)
-  );
+    setTrips(updatedTrips);
 
-  setEditingTrip(null);
+    localStorage.setItem(
+      "trips",
+      JSON.stringify(updatedTrips)
+    );
 
-  setTitle("");
-  setStartDate("");
-  setEndDate("");
-  setDescription("");
+    setEditingTrip(null);
+    setTitle("");
+    setStartDate("");
+    setEndDate("");
+    setDescription("");
+  } catch (error) {
+    console.error(error);
+  }
 };
 
   const register = () => {
@@ -116,6 +148,56 @@ const updateTrip = () => {
 
     alert("회원가입 완료");
   };
+
+  const addComment = (tripId) => {
+    if (!commentText.trim()) return;
+
+      const newComment = {
+        author: currentUser,
+        text: commentText,
+      };
+
+  const updatedComments = {
+    ...comments,
+    [tripId]: [
+      ...(comments[tripId] || []),
+      newComment,
+    ],
+  };
+
+  setComments(updatedComments);
+
+  localStorage.setItem(
+    "comments",
+    JSON.stringify(updatedComments)
+  );
+
+  setCommentText("");
+};
+
+const toggleLike = (tripId) => {
+  const currentLikes = likes[tripId];
+
+  const likedUsers = Array.isArray(currentLikes)
+    ? currentLikes
+    : [];
+
+  const alreadyLiked = likedUsers.includes(currentUser);
+
+  const updatedLikes = {
+    ...likes,
+    [tripId]: alreadyLiked
+      ? likedUsers.filter((user) => user !== currentUser)
+      : [...likedUsers, currentUser],
+  };
+
+  setLikes(updatedLikes);
+
+  localStorage.setItem(
+    "likes",
+    JSON.stringify(updatedLikes)
+  );
+};
 
   const login = () => {
     const users =
@@ -175,6 +257,25 @@ const updateTrip = () => {
       setCurrentUser(user);
     }
   }, []);
+
+  useEffect(() => {
+  const savedComments =
+    localStorage.getItem("comments");
+
+  if (savedComments) {
+    setComments(
+      JSON.parse(savedComments)
+    );
+  }
+}, []);
+
+  useEffect(() => {
+  const savedLikes = localStorage.getItem("likes");
+
+  if (savedLikes) {
+    setLikes(JSON.parse(savedLikes));
+  }
+}, []);
 
   if (!currentUser) {
     return (
@@ -340,6 +441,12 @@ const updateTrip = () => {
             상세보기
           </button>
 
+          <button
+  onClick={() => toggleLike(trip.id)}
+>
+  ❤️ {Array.isArray(likes[trip.id]) ? likes[trip.id].length : 0}
+</button>
+
           {" "}
 
 
@@ -352,6 +459,7 @@ const updateTrip = () => {
       setStartDate(trip.startDate);
       setEndDate(trip.endDate);
       setDescription(trip.description);
+      console.log("수정 클릭", trip.id, trip.author, currentUser);
     }}
   >
     수정
@@ -369,19 +477,62 @@ const updateTrip = () => {
 )}
 
           {selectedTrip === trip.id && (
-            <div
-              style={{
-                marginTop: "10px",
-                padding: "10px",
-                backgroundColor:
-                  "#f5f5f5",
-                borderRadius: "5px",
-                whiteSpace: "pre-line",
-              }}
-            >
-              {trip.description}
-            </div>
-          )}
+  <div
+    style={{
+      marginTop: "10px",
+      padding: "10px",
+      backgroundColor: "#f5f5f5",
+      borderRadius: "5px",
+      whiteSpace: "pre-line",
+    }}
+  >
+    <h4>상세 일정</h4>
+
+    <p>{trip.description}</p>
+
+    <hr />
+
+    <h4>댓글</h4>
+
+    {(comments[trip.id] || []).map(
+      (comment, index) => (
+        <div key={index}>
+          <strong>
+            {comment.author}
+          </strong>
+
+          <p>{comment.text}</p>
+
+          <hr />
+        </div>
+      )
+    )}
+
+    <input
+      type="text"
+      placeholder="댓글 입력"
+      value={commentText}
+      onChange={(e) =>
+        setCommentText(e.target.value)
+      }
+      style={{
+        width: "100%",
+        padding: "8px",
+      }}
+    />
+
+    <br />
+    <br />
+
+    <button
+      onClick={() =>
+        addComment(trip.id)
+      }
+    >
+      댓글 등록
+    </button>
+  </div>
+)}
         </div>
       ))}
     </div>

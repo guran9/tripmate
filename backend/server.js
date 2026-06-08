@@ -6,6 +6,8 @@ const tripRoutes = require("./routes/trip");
 
 const app = express();
 
+require("./db");
+
 app.use(cors());
 app.use(express.json());
 

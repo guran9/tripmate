@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import Login from "./Login";
+const API_URL = "https://tripmate-05xu.onrender.com";
 
 function App() {
   const [trips, setTrips] = useState([]);
@@ -26,7 +27,7 @@ function App() {
   const addTrip = async () => {
     try {
       const response = await fetch(
-        "http://localhost:3000/api/trips",
+        `${API_URL}/api/trips`,
         {
           method: "POST",
           headers: {
@@ -64,7 +65,7 @@ function App() {
 
   const deleteTrip = async (id) => {
   try {
-    await fetch(`http://localhost:3000/api/trips/${id}`, {
+    await fetch(`${API_URL}/api/trips/${id}`, {
       method: "DELETE",
     });
 
@@ -86,7 +87,7 @@ function App() {
 const updateTrip = async () => {
   try {
     await fetch(
-      `http://localhost:3000/api/trips/${editingTrip}`,
+      `${API_URL}/api/trips/${editingTrip}`,
       {
         method: "PUT",
         headers: {
@@ -231,7 +232,7 @@ const toggleLike = (tripId) => {
     if (savedTrips) {
       setTrips(JSON.parse(savedTrips));
     } else {
-      fetch("http://localhost:3000/api/trips")
+      fetch(`${API_URL}/api/trips`)
         .then((response) =>
           response.json()
         )

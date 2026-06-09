@@ -426,9 +426,11 @@ const toggleLike = (tripId) => {
           <p>작성자 : {trip.author}</p>
 
           <p>
-            기간 : {trip.startDate} ~{" "}
-            {trip.endDate}
-          </p>
+  기간 :
+  {trip.startDate?.split("T")[0]}
+  {" ~ "}
+  {trip.endDate?.split("T")[0]}
+</p>
 
           <div
   style={{
